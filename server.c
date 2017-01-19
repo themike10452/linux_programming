@@ -37,7 +37,7 @@ int main(int argc, char** argv)
         errexit("Binding error.\n");
     }
 
-    vec_cli_infos = vector(sizeof(struct client_info), 64);
+    vec_cli_infos = vector(64);
 
     listen(listenfd, 5);
 
@@ -69,7 +69,7 @@ void* serv_initconn(void* args)
 {
     struct client_info* cli_info = args;
 
-    vector_push(vec_cli_infos, cli_info, sizeof(*cli_info));
+    vector_push(vec_cli_infos, cli_info);
 
     char readbuffer[SERV_BUFF_READ], writebuffer[SERV_BUFF_WRITE];
     bzero(readbuffer, sizeof(readbuffer));
@@ -102,18 +102,16 @@ void serv_broadcast(int src_sockfd, const char* message)
     bzero(text, sizeof(text));
     sprintf(text, "%d says: %s", src_sockfd, message);
 
-    struct client_info* ci = malloc(sizeof(struct client_info));
+    struct client_info* ci;
     int i, count = vec_cli_infos->size;
 
     for (i = 0; i < count; i++)
     {
-        vector_getp(vec_cli_infos, ci, i);
+        ci = (struct client_info*)vector_get(vec_cli_infos, i);
 
         if (ci->sockfd != src_sockfd)
         {
             write(ci->sockfd, text, strlen(text));
         }
     }
-
-    free(ci);
 }
